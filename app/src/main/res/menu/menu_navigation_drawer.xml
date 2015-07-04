@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.legend.ace18.songs.NavigationDrawerActivity">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/action_main"
+            android:checked="true"
+            android:orderInCategory="100"
+            android:title="@string/action_main" />
+
+        <item
+            android:id="@+id/action_mySongs"
+            android:orderInCategory="100"
+            android:title="@string/action_mySongs" />
+    </group>
+</menu>
