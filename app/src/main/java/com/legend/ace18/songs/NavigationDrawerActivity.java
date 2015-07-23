@@ -1,12 +1,11 @@
 package com.legend.ace18.songs;
 
+import android.content.Intent;
+import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
-import android.os.Bundle;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -14,23 +13,30 @@ import android.widget.FrameLayout;
 
 public class NavigationDrawerActivity extends ActionBarActivity implements NavigationView.OnNavigationItemSelectedListener{
 
-    private NavigationView navigationView;
-    private DrawerLayout drawerLayout;
+    protected NavigationView navigationView;
+    protected DrawerLayout drawerLayout;
     protected FrameLayout frameLayout;
-    protected Toolbar toolbar;
+    protected ActionBarDrawerToggle actionBarDrawerToggle;
+
+    @Override
+    public void setContentView(int layoutResID) {
+        View layout = getLayoutInflater().inflate(R.layout.activity_navigation_drawer, null);
+        frameLayout = (FrameLayout) layout.findViewById(R.id.activity_frame);
+        getLayoutInflater().inflate(layoutResID, frameLayout, true);
+        super.setContentView(layout);
+
+        drawerLayout = (DrawerLayout) layout.findViewById(R.id.drawer_layout);
+        navigationView = (NavigationView) layout.findViewById(R.id.navigation);
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_navigation_drawer);
-        frameLayout = (FrameLayout) findViewById(R.id.activity_frame);
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        navigationView = (NavigationView) findViewById(R.id.navigation);
+
         navigationView.setNavigationItemSelectedListener(this);
-
-
-
-        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.drawer_open, R.string.drawer_close){
+        actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.drawer_open, R.string.drawer_close){
             @Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
@@ -45,19 +51,23 @@ public class NavigationDrawerActivity extends ActionBarActivity implements Navig
 
         };
         drawerLayout.setDrawerListener(actionBarDrawerToggle);
-        actionBarDrawerToggle
-                .syncState();
+        actionBarDrawerToggle.syncState();
     }
 
 
     @Override
     public boolean onNavigationItemSelected(MenuItem menuItem) {
-        int id = menuItem.getGroupId();
+        int id = menuItem.getItemId();
         switch(id){
             case R.id.action_main:
+                Intent mainIntent = new Intent(this, MainActivity.class);
+                startActivity(mainIntent);
+                finish();
+                drawerLayout.closeDrawers();
                 break;
 
             case R.id.action_mySongs:
+                drawerLayout.closeDrawers();
                 break;
         }
         return true;
