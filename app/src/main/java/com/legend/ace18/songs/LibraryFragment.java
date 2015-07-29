@@ -59,7 +59,7 @@ public class LibraryFragment extends Fragment {
 
     private void setViewPager(View layout) {
         viewPager = (ViewPager) layout.findViewById(R.id.viewpager);
-        viewPager.setAdapter(new MyFragmentPagerAdapter(getChildFragmentManager()));
+        viewPager.setAdapter(new MyFragmentPagerAdapter(getChildFragmentManager(), viewPager));
         tabLayout = (TabLayout) layout.findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(viewPager);
     }
@@ -83,12 +83,15 @@ public class LibraryFragment extends Fragment {
         }
     }
 
-    public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
+    public class MyFragmentPagerAdapter extends FragmentPagerAdapter implements ViewPager.OnPageChangeListener {
 
         private String tabTitles[] = new String[]{"PlayLists", "All Songs"};
+        private ViewPager mViewPager;
 
-        public MyFragmentPagerAdapter(FragmentManager fm) {
+        public MyFragmentPagerAdapter(FragmentManager fm, ViewPager pager) {
             super(fm);
+            this.mViewPager = pager;
+            mViewPager.addOnPageChangeListener(this);
         }
 
         @Override
@@ -114,5 +117,25 @@ public class LibraryFragment extends Fragment {
         public CharSequence getPageTitle(int position) {
             return tabTitles[position];
         }
+
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+        }
+
+        @Override
+        public void onPageSelected(int position) {
+            FragmentRefreshListener frag = (FragmentRefreshListener) this.instantiateItem(mViewPager, position);
+            frag.refreshFragment();
+        }
+
+        @Override
+        public void onPageScrollStateChanged(int state) {
+
+        }
+    }
+
+    public interface FragmentRefreshListener {
+        void refreshFragment();
     }
 }

@@ -1,5 +1,6 @@
 package com.legend.ace18.songs.utils;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -34,18 +35,25 @@ public class MusicRetriever {
         int durationColumn = cur.getColumnIndex(MediaStore.Audio.Media.DURATION);
         int dataColumn = cur.getColumnIndex(MediaStore.Audio.Media.DATA);
         int idColumn = cur.getColumnIndex(MediaStore.Audio.Media._ID);
+        int albumIdColumn = cur.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
 
         if (cur == null) {
             Log.d("legend.ace18", "NO data");
         } else {
             if (cur.moveToFirst()) {
                 do {
+                    Long albumId = cur.getLong(albumIdColumn);
+                    Uri sArtworkUri = Uri
+                            .parse("content://media/external/audio/albumart");
+                    Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, albumId);
+
                     Songs songs = new Songs();
                     songs.setTitle(cur.getString(titleColumn));
                     songs.setArtist(cur.getString(artistColumn));
                     songs.setAlbum(cur.getString(albumColumn));
-                    songs.setDuration(cur.getLong(durationColumn));
+                    songs.setDuration(cur.getInt(durationColumn));
                     songs.setPath(cur.getString(dataColumn));
+                    songs.setAlbumArtUri(albumArtUri);
                     songsList.add(songs);
                 } while (cur.moveToNext());
             }

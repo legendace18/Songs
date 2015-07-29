@@ -8,5 +8,6 @@
     <color name="color_accent">#EC407A</color>
     <color name="color_background">#FAFAFA</color>
     <color name="white">#FFFFFF</color>
+    <color name="transparent_white">#99FFFFFF</color>
 
 </resources>

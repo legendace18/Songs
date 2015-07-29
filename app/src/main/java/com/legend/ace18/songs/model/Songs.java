@@ -1,5 +1,7 @@
 package com.legend.ace18.songs.model;
 
+import android.net.Uri;
+
 /**
  * Created by rohan on 7/7/15.
  */
@@ -11,13 +13,23 @@ public class Songs {
     public String album;
     public String lyrics;
     public String path;
-    public Long duration;
+    public int duration;
+    public Uri albumArtUri;
 
-    public Long getDuration() {
+    public Uri getAlbumArtUri() {
+        return albumArtUri;
+    }
+
+    public void setAlbumArtUri(Uri albumArtUri) {
+        this.albumArtUri = albumArtUri;
+    }
+
+
+    public int getDuration() {
         return duration;
     }
 
-    public void setDuration(Long duration) {
+    public void setDuration(int duration) {
         this.duration = duration;
     }
 

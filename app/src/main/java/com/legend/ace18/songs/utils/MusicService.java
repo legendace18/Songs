@@ -1,15 +1,23 @@
 package com.legend.ace18.songs.utils;
 
+import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
+import com.legend.ace18.songs.MainActivity;
+import com.legend.ace18.songs.R;
 import com.legend.ace18.songs.model.Songs;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
@@ -24,11 +32,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     private List<Songs> songsList;
     private int songIndex;
 
-    private Boolean isShuffle = false;
-    private Boolean isRepreat = false;
+    public static Boolean isShuffle = false;
+    public static int isRepeat = 0;
     private String title, artist;
+    private int totalDuration;
 
+    private MusicServiceListener musicServiceListener;
     private final IBinder musicBind = new MusicBinder();
+    private NotificationManager mNotificationManager;
 
     @Override
     public void onCreate() {
@@ -42,6 +53,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
         player.setOnErrorListener(this);
+    }
+
+    public void setMusicServiceListener(MusicServiceListener musicServiceListener) {
+        this.musicServiceListener = musicServiceListener;
     }
 
     public void setList(List<Songs> songsList) {
@@ -58,6 +73,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         Songs songs = songsList.get(songIndex);
         title = songs.getTitle();
         artist = songs.getArtist();
+        totalDuration = songs.getDuration();
+
         player.reset();
         try {
             player.setDataSource(songs.getPath());
@@ -68,8 +85,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void pauseSong() {
-        if (player.isPlaying())
+        if (player.isPlaying()) {
             player.pause();
+        }
     }
 
     public void resumeSong() {
@@ -84,7 +102,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 newSong = new Random().nextInt(songsList.size());
             }
             songIndex = newSong;
-        } else {
+        } else if (isRepeat == 0) {
+            songIndex++;
+            if (songIndex >= songsList.size()) {
+                player.stop();
+                player.release();
+                return;
+            }
+        } else if (isRepeat == 1) {
             songIndex++;
             if (songIndex >= songsList.size()) songIndex = 0;
         }
@@ -105,11 +130,12 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         Songs songs = new Songs();
         songs.setTitle(title);
         songs.setArtist(artist);
+        songs.setDuration(totalDuration);
         return songs;
     }
 
     public int getDuration() {
-        if (player != null) return player.getDuration();
+        if (player != null) return totalDuration;
         return 0;
     }
 
@@ -151,11 +177,27 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
         mediaPlayer.start();
+        musicServiceListener.onPlayMusic(songsList.get(songIndex));
+        setNotifications();
+    }
+
+    private void setNotifications() {
+        Songs songs = songsList.get(songIndex);
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setContentTitle(songs.getTitle())
+                        .setContentText(songs.getArtist())
+                        .setOngoing(true);
+        mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(1, mBuilder.build());
     }
 
     @Override
     public void onDestroy() {
-        stopForeground(true);
+        if (mNotificationManager != null)
+            mNotificationManager.cancelAll();
     }
 
     //binder
@@ -165,4 +207,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         }
     }
 
+    public interface MusicServiceListener {
+        void onPlayMusic(Songs songs);
+    }
 }

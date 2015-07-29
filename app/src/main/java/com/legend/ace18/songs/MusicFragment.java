@@ -2,25 +2,26 @@ package com.legend.ace18.songs;
 
 
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.app.Dialog;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.PopupMenu;
 
-import com.legend.ace18.songs.adapters.CustomAdapter;
+import com.legend.ace18.songs.adapters.PlayListAdapter;
+import com.legend.ace18.songs.adapters.SongsAdapter;
+import com.legend.ace18.songs.model.PlayList;
 import com.legend.ace18.songs.model.Songs;
-import com.legend.ace18.songs.utils.MusicPlayer;
+import com.legend.ace18.songs.utils.DatabaseHandler;
 import com.legend.ace18.songs.utils.MusicRetriever;
-import com.legend.ace18.songs.utils.MusicService;
 
 import java.util.List;
 
@@ -28,11 +29,12 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MusicFragment extends Fragment {
+public class MusicFragment extends Fragment implements SongsAdapter.TouchListener, LibraryFragment.FragmentRefreshListener {
 
     private List<Songs> songsList;
     private RecyclerView recyclerView;
     private SongClickListener songClickListener;
+    private DatabaseHandler db;
 
     public MusicFragment() {
         // Required empty public constructor
@@ -44,6 +46,8 @@ public class MusicFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View layout = inflater.inflate(R.layout.fragment_music, container, false);
+        db = new DatabaseHandler(getActivity());
+
         recyclerView = (RecyclerView) layout.findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -69,7 +73,8 @@ public class MusicFragment extends Fragment {
             }
         }));
 
-        CustomAdapter adapter = new CustomAdapter(getActivity(), songsList);
+        SongsAdapter adapter = new SongsAdapter(getActivity(), songsList);
+        adapter.setTouchListener(this);
         recyclerView.setAdapter(adapter);
     }
 
@@ -87,4 +92,82 @@ public class MusicFragment extends Fragment {
         }
     }
 
+    @Override
+    public void itemTouched(View v, final int position) {
+        PopupMenu popup = new PopupMenu(getActivity(), v);
+        popup.getMenuInflater().inflate(R.menu.popup_menu, popup.getMenu());
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                int id = menuItem.getItemId();
+                switch (id) {
+                    case R.id.action_play:
+                        songClickListener.onSongClick(position, songsList);
+                        break;
+                    case R.id.action_addPlayList:
+                        showPlayListPopup(songsList.get(position));
+                        break;
+                }
+                return true;
+            }
+        });
+        popup.show();
+    }
+
+    private void showPlayListPopup(final Songs songs) {
+        List<PlayList> playLists = db.getPlayList();
+        PlayListAdapter adapter;
+
+        final Dialog d = new Dialog(getActivity());
+        d.setContentView(R.layout.popup_content);
+        d.setTitle("PlayLists");
+        d.setCancelable(true);
+        RecyclerView pRecyclerView = (RecyclerView) d.findViewById(R.id.playList_recyclerView);
+        pRecyclerView.setHasFixedSize(true);
+        pRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        Button btn_createPlaylist = (Button) d.findViewById(R.id.btn_createPlaylist);
+        adapter = new PlayListAdapter(getActivity(), R.layout.search_row, playLists);
+        pRecyclerView.setAdapter(adapter);
+        btn_createPlaylist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showCreatePlaylistDialog(songs);
+                d.dismiss();
+            }
+        });
+        d.show();
+    }
+
+    private void showCreatePlaylistDialog(final Songs songs) {
+        final Dialog d = new Dialog(getActivity());
+        d.setContentView(R.layout.dialog_add_playlist);
+        d.setTitle("Create PlayList");
+        d.setCancelable(false);
+        final EditText et_title = (EditText) d.findViewById(R.id.et_title);
+        final EditText et_description = (EditText) d.findViewById(R.id.et_description);
+        Button btn_create = (Button) d.findViewById(R.id.btn_create);
+        Button btn_cancel = (Button) d.findViewById(R.id.btn_cancel);
+        btn_create.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String title = et_title.getText().toString();
+                String description = et_description.getText().toString();
+                db.addPlayList(new PlayList(title, description), songs);
+                d.dismiss();
+            }
+        });
+
+        btn_cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                d.dismiss();
+            }
+        });
+        d.show();
+    }
+
+    @Override
+    public void refreshFragment() {
+
+    }
 }
