@@ -8,8 +8,10 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
 
 import com.legend.ace18.songs.adapters.PlayListAdapter;
 import com.legend.ace18.songs.model.PlayList;
@@ -21,7 +23,8 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class PlayListFragment extends Fragment implements LibraryFragment.FragmentRefreshListener {
+public class PlayListFragment extends Fragment implements LibraryFragment.FragmentRefreshListener,
+PlayListAdapter.TouchListener{
 
     private RecyclerView recyclerView;
     private DatabaseHandler db;
@@ -49,6 +52,8 @@ public class PlayListFragment extends Fragment implements LibraryFragment.Fragme
                 PlayList playList = playLists.get(position);
                 Intent intent = new Intent(getActivity(), PlayListActivity.class);
                 intent.putExtra("PLAYLIST_ID", playList.getId());
+                intent.putExtra("PLAYLIST_TITLE", playList.getTitle());
+                intent.putExtra("PLAYLIST_DESC", playList.getDescription());
                 startActivity(intent);
             }
 
@@ -70,11 +75,45 @@ public class PlayListFragment extends Fragment implements LibraryFragment.Fragme
     private void updateViews() {
         playLists = db.getPlayList();
         adapter = new PlayListAdapter(getActivity(), R.layout.playlist_row, playLists);
+        adapter.setTouchListener(this);
         recyclerView.setAdapter(adapter);
     }
 
     @Override
     public void refreshFragment() {
         updateViews();
+    }
+
+    @Override
+    public void itemTouched(View v, final int position) {
+        final PlayList playList = playLists.get(position);
+        PopupMenu popup = new PopupMenu(getActivity(), v);
+        popup.getMenuInflater().inflate(R.menu.playlist_popup_menu, popup.getMenu());
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                int id = menuItem.getItemId();
+                switch(id){
+                    case R.id.action_open:
+
+                        Intent intent = new Intent(getActivity(), PlayListActivity.class);
+                        intent.putExtra("PLAYLIST_ID", playList.getId());
+                        intent.putExtra("PLAYLIST_TITLE", playList.getTitle());
+                        intent.putExtra("PLAYLIST_DESC", playList.getDescription());
+                        startActivity(intent);
+                        break;
+                    case R.id.action_remove:
+                        if(db.removePlayList(playList.getId())){
+                            playLists.remove(position);
+                            adapter.notifyItemRemoved(position);
+                        }
+                        break;
+                    case R.id.action_edit:
+                        break;
+                }
+                return true;
+            }
+        });
+        popup.show();
     }
 }

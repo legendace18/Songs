@@ -15,6 +15,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:text="Create PlayList"/>
+        android:background="@color/color_primary"
+        android:text="Create PlayList"
+        android:textColor="@color/white"/>
 
 </RelativeLayout>

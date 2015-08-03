@@ -115,7 +115,7 @@ public class MusicFragment extends Fragment implements SongsAdapter.TouchListene
     }
 
     private void showPlayListPopup(final Songs songs) {
-        List<PlayList> playLists = db.getPlayList();
+        final List<PlayList> playLists = db.getPlayList();
         PlayListAdapter adapter;
 
         final Dialog d = new Dialog(getActivity());
@@ -125,6 +125,19 @@ public class MusicFragment extends Fragment implements SongsAdapter.TouchListene
         RecyclerView pRecyclerView = (RecyclerView) d.findViewById(R.id.playList_recyclerView);
         pRecyclerView.setHasFixedSize(true);
         pRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        pRecyclerView.addOnItemTouchListener(new RecyclerViewTouchListener(getActivity(), pRecyclerView, new ClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                PlayList playList = playLists.get(position);
+                db.addPlayListSongs(songs, playList.getId());
+                d.dismiss();
+            }
+
+            @Override
+            public void onLongClick(View view, int position) {
+
+            }
+        }));
         Button btn_createPlaylist = (Button) d.findViewById(R.id.btn_createPlaylist);
         adapter = new PlayListAdapter(getActivity(), R.layout.search_row, playLists);
         pRecyclerView.setAdapter(adapter);

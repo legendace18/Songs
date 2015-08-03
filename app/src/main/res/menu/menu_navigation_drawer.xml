@@ -3,32 +3,20 @@
     tools:context="com.legend.ace18.songs.NavigationDrawerActivity">
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/action_playList"
-            android:checked="true"
-            android:icon="@drawable/ic_dashboard_grey600_24dp"
-            android:title="@string/action_playList" />
-
-        <item
             android:id="@+id/action_library"
+            android:checked="true"
             android:icon="@drawable/ic_my_library_music_grey600_24dp"
             android:title="@string/action_library" />
 
         <item
-            android:id="@+id/section"
-            android:title="@string/section_title">
-            <menu>
-                <item
-                    android:id="@+id/action_main"
-                    android:checked="true"
-                    android:icon="@drawable/ic_dashboard_grey600_24dp"
-                    android:title="@string/action_main" />
+            android:id="@+id/action_main"
+            android:icon="@drawable/ic_dashboard_grey600_24dp"
+            android:title="@string/action_main" />
 
-                <item
-                    android:id="@+id/action_mySongs"
-                    android:icon="@drawable/ic_my_library_music_grey600_24dp"
-                    android:title="@string/action_mySongs" />
-            </menu>
-        </item>
+        <item
+            android:id="@+id/action_mySongs"
+            android:icon="@drawable/ic_my_library_music_grey600_24dp"
+            android:title="@string/action_mySongs" />
     </group>
 
 </menu>

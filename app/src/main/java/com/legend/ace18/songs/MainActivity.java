@@ -1,5 +1,6 @@
 package com.legend.ace18.songs;
 
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -7,24 +8,31 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.PersistableBundle;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.legend.ace18.songs.adapters.PlayListAdapter;
+import com.legend.ace18.songs.model.PlayList;
 import com.legend.ace18.songs.model.Songs;
+import com.legend.ace18.songs.utils.DatabaseHandler;
+import com.legend.ace18.songs.utils.MusicRetriever;
 import com.legend.ace18.songs.utils.MusicService;
 import com.legend.ace18.songs.utils.SongUtils;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
@@ -58,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private SeekBar songProgressbar;
     private Handler mHandler = new Handler();
     private SongUtils utils;
-    private List<Songs> songsList;
+    private DatabaseHandler db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,10 +75,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setNavigationView(null);
 
         fm = getSupportFragmentManager();
-        LibraryFragment frag = new LibraryFragment();
-        fm.beginTransaction().add(R.id.activity_container, frag).commit();
+        Fragment frag;
+        if (savedInstanceState != null) {
+            frag = fm.getFragment(savedInstanceState, "MAINFRAGMENT");
+            fm.beginTransaction().replace(R.id.activity_container, frag).commit();
+        } else {
+
+            frag = new LibraryFragment();
+            fm.beginTransaction().add(R.id.activity_container, frag).commit();
+        }
 
         utils = new SongUtils();
+        db = new DatabaseHandler(this);
 
         tv_title = (TextView) findViewById(R.id.tv_title);
         tv_artist = (TextView) findViewById(R.id.tv_artist);
@@ -94,14 +110,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public void onClick(View view) {
                 if (musicBound) {
-                    if (musicSrv.isPlaying()) {
-                        musicSrv.pauseSong();
-                        btn_play.setImageResource(R.drawable.ic_play_circle_fill_blue_48dp);
-                        btn_play_short.setImageResource(R.drawable.ic_play_arrow_black_48dp);
+                    if (musicSrv.isMusicSet) {
+                        if (musicSrv.isPlaying()) {
+                            musicSrv.pauseSong();
+                            btn_play.setImageResource(R.drawable.ic_play_circle_fill_blue_48dp);
+                            btn_play_short.setImageResource(R.drawable.ic_play_arrow_black_48dp);
+                        } else {
+                            musicSrv.resumeSong();
+                            btn_play.setImageResource(R.drawable.ic_pause_circle_fill_blue_48dp);
+                            btn_play_short.setImageResource(R.drawable.ic_pause_black_48dp);
+                        }
                     } else {
-                        musicSrv.resumeSong();
-                        btn_play.setImageResource(R.drawable.ic_pause_circle_fill_blue_48dp);
-                        btn_play_short.setImageResource(R.drawable.ic_pause_black_48dp);
+                        List<Songs> songsList = new MusicRetriever(MainActivity.this).prepare();
+                        onSongClick(0, songsList);
                     }
                 }
             }
@@ -111,14 +132,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public void onClick(View view) {
                 if (musicBound) {
-                    if (musicSrv.isPlaying()) {
-                        musicSrv.pauseSong();
-                        btn_play_short.setImageResource(R.drawable.ic_play_arrow_black_48dp);
-                        btn_play.setImageResource(R.drawable.ic_play_circle_fill_blue_48dp);
+                    if (musicSrv.isMusicSet) {
+                        if (musicSrv.isPlaying()) {
+                            musicSrv.pauseSong();
+                            btn_play_short.setImageResource(R.drawable.ic_play_arrow_black_48dp);
+                            btn_play.setImageResource(R.drawable.ic_play_circle_fill_blue_48dp);
+                        } else {
+                            musicSrv.resumeSong();
+                            btn_play_short.setImageResource(R.drawable.ic_pause_black_48dp);
+                            btn_play.setImageResource(R.drawable.ic_pause_circle_fill_blue_48dp);
+                        }
                     } else {
-                        musicSrv.resumeSong();
-                        btn_play_short.setImageResource(R.drawable.ic_pause_black_48dp);
-                        btn_play.setImageResource(R.drawable.ic_pause_circle_fill_blue_48dp);
+                        List<Songs> songsList = new MusicRetriever(MainActivity.this).prepare();
+                        onSongClick(0, songsList);
                     }
                 }
             }
@@ -128,7 +154,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public void onClick(View view) {
                 if (musicBound) {
-                    musicSrv.playNext();
+                    if (musicSrv.isMusicSet) {
+                        musicSrv.playNext();
+                    } else {
+                        List<Songs> songsList = new MusicRetriever(MainActivity.this).prepare();
+                        onSongClick(0, songsList);
+                    }
                 }
             }
         });
@@ -137,7 +168,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public void onClick(View view) {
                 if (musicBound) {
-                    musicSrv.playPrev();
+                    if (musicSrv.isMusicSet) {
+                        musicSrv.playPrev();
+                    } else {
+                        List<Songs> songsList = new MusicRetriever(MainActivity.this).prepare();
+                        onSongClick(0, songsList);
+                    }
                 }
             }
         });
@@ -180,6 +216,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
+        btn_overflow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PopupMenu popup = new PopupMenu(MainActivity.this, view);
+                popup.getMenuInflater().inflate(R.menu.popup_menu, popup.getMenu());
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem menuItem) {
+                        int id = menuItem.getItemId();
+                        switch (id) {
+                            case R.id.action_addPlayList:
+                                showPlayListPopup(musicSrv.getSongDetails());
+                                break;
+                        }
+                        return true;
+                    }
+                });
+                popup.show();
+            }
+        });
+
     }
 
     //connect to the service
@@ -191,6 +248,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             //get service
             musicSrv = binder.getService();
             musicSrv.setMusicServiceListener(MainActivity.this);
+            if (musicSrv.isMusicSet) {
+                setSongDetail(musicSrv.getSongDetails());
+                updateProgressBar();
+                setControllers();
+            }
             musicBound = true;
         }
 
@@ -199,6 +261,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             musicBound = false;
         }
     };
+
 
     @Override
     public void onStart() {
@@ -228,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         tv_totalDuration.setText(totalDuration);
         tv_currentTime.setText("0:00");
         if (songs.getAlbumArtUri() != null) {
-            Picasso.with(this).load(songs.getAlbumArtUri()).fit().into(playerImage);
+            Picasso.with(this).load(songs.getAlbumArtUri()).into(playerImage);
             Picasso.with(this).load(songs.getAlbumArtUri()).fit().into(songImage);
         } else {
             playerImage.setImageResource(R.drawable.music_bg);
@@ -261,7 +324,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             songProgressbar.setProgress(progress);
 
             // Running this thread after 100 milliseconds
-            mHandler.postDelayed(this, 200);
+            if (musicBound)
+                mHandler.postDelayed(this, 200);
         }
     };
 
@@ -318,8 +382,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         menuItem.setChecked(true);
         int id = menuItem.getItemId();
         switch (id) {
-            case R.id.action_playList:
-                break;
             case R.id.action_library:
                 LibraryFragment libFrag = new LibraryFragment();
                 fm.beginTransaction().replace(R.id.activity_container, libFrag).commit();
@@ -337,10 +399,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        serviceIntent = new Intent(this, MusicService.class);
+        startService(serviceIntent);
+        bindService(serviceIntent, musicConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (musicBound) {
+            unbindService(musicConnection);
+            musicBound = false;
+        }
+    }
 
     @Override
     public void onDestroy() {
-        unbindService(musicConnection);
+        //unbindService(musicConnection);
         stopService(serviceIntent);
         musicBound = false;
         super.onDestroy();
@@ -380,6 +458,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
+    public void onStopMusic() {
+        mHandler.removeCallbacks(mUpdateTimeTask);
+    }
+
+    @Override
     public void onPanelSlide(View view, float v) {
 
     }
@@ -404,5 +487,98 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public void onPanelHidden(View view) {
 
+    }
+
+    private void showPlayListPopup(final Songs songs) {
+        final List<PlayList> playLists = db.getPlayList();
+        PlayListAdapter adapter;
+
+        final Dialog d = new Dialog(this);
+        d.setContentView(R.layout.popup_content);
+        d.setTitle("PlayLists");
+        d.setCancelable(true);
+        RecyclerView pRecyclerView = (RecyclerView) d.findViewById(R.id.playList_recyclerView);
+        pRecyclerView.setHasFixedSize(true);
+        pRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        pRecyclerView.addOnItemTouchListener(new RecyclerViewTouchListener(this, pRecyclerView, new ClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                PlayList playList = playLists.get(position);
+                db.addPlayListSongs(songs, playList.getId());
+                d.dismiss();
+            }
+
+            @Override
+            public void onLongClick(View view, int position) {
+
+            }
+        }));
+        Button btn_createPlaylist = (Button) d.findViewById(R.id.btn_createPlaylist);
+        adapter = new PlayListAdapter(this, R.layout.search_row, playLists);
+        pRecyclerView.setAdapter(adapter);
+        btn_createPlaylist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showCreatePlaylistDialog(songs);
+                d.dismiss();
+            }
+        });
+        d.show();
+    }
+
+    private void showCreatePlaylistDialog(final Songs songs) {
+        final Dialog d = new Dialog(this);
+        d.setContentView(R.layout.dialog_add_playlist);
+        d.setTitle("Create PlayList");
+        d.setCancelable(false);
+        final EditText et_title = (EditText) d.findViewById(R.id.et_title);
+        final EditText et_description = (EditText) d.findViewById(R.id.et_description);
+        Button btn_create = (Button) d.findViewById(R.id.btn_create);
+        Button btn_cancel = (Button) d.findViewById(R.id.btn_cancel);
+        btn_create.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String title = et_title.getText().toString();
+                String description = et_description.getText().toString();
+                db.addPlayList(new PlayList(title, description), songs);
+                d.dismiss();
+            }
+        });
+
+        btn_cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                d.dismiss();
+            }
+        });
+        d.show();
+    }
+
+    private void setControllers() {
+        if (musicSrv.isPlaying()) {
+            btn_play.setImageResource(R.drawable.ic_pause_circle_fill_blue_48dp);
+            btn_play_short.setImageResource(R.drawable.ic_pause_black_48dp);
+        } else {
+            btn_play.setImageResource(R.drawable.ic_play_circle_fill_blue_48dp);
+            btn_play_short.setImageResource(R.drawable.ic_play_arrow_black_48dp);
+        }
+        if (musicSrv.isRepeat == 0) {
+            btn_repeat.setImageResource(R.drawable.ic_repeat_black_24dp);
+        } else if (musicSrv.isRepeat == 1) {
+            btn_repeat.setImageResource(R.drawable.ic_repeat_blue_24dp);
+        } else {
+            btn_repeat.setImageResource(R.drawable.ic_repeat_one_blue_24dp);
+        }
+        if (musicSrv.isShuffle) {
+            btn_shuffle.setImageResource(R.drawable.ic_shuffle_blue_24dp);
+        } else {
+            btn_shuffle.setImageResource(R.drawable.ic_shuffle_black_24dp);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        fm.putFragment(outState, "MAINFRAGMENT", fm.findFragmentById(R.id.activity_container));
     }
 }

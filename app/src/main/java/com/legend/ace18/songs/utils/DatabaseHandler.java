@@ -193,6 +193,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_ARTIST, songs.getArtist());
         values.put(KEY_ALBUM, songs.getAlbum());
         values.put(KEY_PATH, songs.getPath());
+        values.put(KEY_DURATION, songs.getDuration());
         values.put(KEY_ALBUMARTURI, songs.getAlbumArtUri().toString());
         values.put(KEY_PLAYLISTID, playlistId);
         db.insert(TABLE_PLAYLIST_SONGS, null, values);
@@ -204,8 +205,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " + TABLE_PLAYLIST_SONGS + " WHERE " + KEY_PLAYLISTID + "=?";
         Cursor cur = db.rawQuery(query, new String[]{String.valueOf(playListId)});
-        if(cur.moveToFirst()){
-            do{
+        if (cur.moveToFirst()) {
+            do {
                 Songs songs = new Songs();
                 songs.setTitle(cur.getString(cur.getColumnIndex(KEY_TITLE)));
                 songs.setArtist(cur.getString(cur.getColumnIndex(KEY_ARTIST)));
@@ -214,8 +215,19 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 songs.setDuration(cur.getInt(cur.getColumnIndex(KEY_DURATION)));
                 songs.setAlbumArtUri(Uri.parse(cur.getString(cur.getColumnIndex(KEY_ALBUMARTURI))));
                 songsList.add(songs);
-            }while (cur.moveToNext());
+            } while (cur.moveToNext());
         }
         return songsList;
+    }
+
+    public boolean removePlayList(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String[] whereArgs = new String[]{String.valueOf(id)};
+        int count = db.delete(TABLE_PLAYLIST_SONGS, KEY_PLAYLISTID + "=?", whereArgs);
+        if (count == 1)
+            return db.delete(TABLE_PLAYLIST, KEY_ID + "=?", whereArgs) > 0;
+        else
+            return false;
+
     }
 }

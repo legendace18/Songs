@@ -34,6 +34,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     public static Boolean isShuffle = false;
     public static int isRepeat = 0;
+    public static Boolean isMusicSet = false;
     private String title, artist;
     private int totalDuration;
 
@@ -74,7 +75,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         title = songs.getTitle();
         artist = songs.getArtist();
         totalDuration = songs.getDuration();
-
+        isMusicSet = true;
         player.reset();
         try {
             player.setDataSource(songs.getPath());
@@ -105,8 +106,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         } else if (isRepeat == 0) {
             songIndex++;
             if (songIndex >= songsList.size()) {
+                musicServiceListener.onStopMusic();
+                isMusicSet = false;
                 player.stop();
-                player.release();
                 return;
             }
         } else if (isRepeat == 1) {
@@ -126,12 +128,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         return player.isPlaying();
     }
 
+
     public Songs getSongDetails() {
-        Songs songs = new Songs();
-        songs.setTitle(title);
-        songs.setArtist(artist);
-        songs.setDuration(totalDuration);
-        return songs;
+        return songsList.get(songIndex);
     }
 
     public int getDuration() {
@@ -162,7 +161,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onCompletion(MediaPlayer player) {
         if (player.getCurrentPosition() > 0) {
-            player.reset();
             playNext();
         }
     }
@@ -182,12 +180,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     private void setNotifications() {
-        Songs songs = songsList.get(songIndex);
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle(songs.getTitle())
-                        .setContentText(songs.getArtist())
+                        .setContentTitle(title)
+                        .setContentText(artist)
                         .setOngoing(true);
         mNotificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -198,6 +195,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     public void onDestroy() {
         if (mNotificationManager != null)
             mNotificationManager.cancelAll();
+        player.release();
+        isMusicSet = false;
     }
 
     //binder
@@ -209,5 +208,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     public interface MusicServiceListener {
         void onPlayMusic(Songs songs);
+        void onStopMusic();
     }
 }
