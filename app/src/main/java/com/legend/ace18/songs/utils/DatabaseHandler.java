@@ -208,6 +208,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         if (cur.moveToFirst()) {
             do {
                 Songs songs = new Songs();
+                songs.setSongs_id(cur.getInt(cur.getColumnIndex(KEY_ID)));
                 songs.setTitle(cur.getString(cur.getColumnIndex(KEY_TITLE)));
                 songs.setArtist(cur.getString(cur.getColumnIndex(KEY_ARTIST)));
                 songs.setAlbum(cur.getString(cur.getColumnIndex(KEY_ALBUM)));
@@ -217,6 +218,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 songsList.add(songs);
             } while (cur.moveToNext());
         }
+        db.close();
         return songsList;
     }
 
@@ -224,10 +226,17 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         String[] whereArgs = new String[]{String.valueOf(id)};
         int count = db.delete(TABLE_PLAYLIST_SONGS, KEY_PLAYLISTID + "=?", whereArgs);
-        if (count == 1)
+        if (count > 0)
             return db.delete(TABLE_PLAYLIST, KEY_ID + "=?", whereArgs) > 0;
         else
             return false;
 
+    }
+
+    public int removePlayListSong(int playListId, int songs_id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String[] whereArgs = new String[] {String.valueOf(playListId), String.valueOf(songs_id)};
+        int count = db.delete(TABLE_PLAYLIST_SONGS, KEY_PLAYLISTID + "=? AND " + KEY_ID + "=?", whereArgs);
+        return count;
     }
 }

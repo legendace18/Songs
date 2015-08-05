@@ -61,4 +61,43 @@ public class MusicRetriever {
         return songsList;
     }
 
+    public List<Songs> filter(String newText) {
+        Uri uri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        String sel = "%"+newText+"%";
+        Cursor cur = context.getContentResolver().query(uri, null,
+                MediaStore.Audio.Media.IS_MUSIC + " = 1 AND " + MediaStore.Audio.Media.TITLE + " LIKE ?",
+                new String[]{ sel }, null);
+
+        int artistColumn = cur.getColumnIndex(MediaStore.Audio.Media.ARTIST);
+        int titleColumn = cur.getColumnIndex(MediaStore.Audio.Media.TITLE);
+        int albumColumn = cur.getColumnIndex(MediaStore.Audio.Media.ALBUM);
+        int durationColumn = cur.getColumnIndex(MediaStore.Audio.Media.DURATION);
+        int dataColumn = cur.getColumnIndex(MediaStore.Audio.Media.DATA);
+        int idColumn = cur.getColumnIndex(MediaStore.Audio.Media._ID);
+        int albumIdColumn = cur.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+
+        if (cur == null) {
+            Log.d("legend.ace18", "NO data");
+        } else {
+            if (cur.moveToFirst()) {
+                do {
+                    Long albumId = cur.getLong(albumIdColumn);
+                    Uri sArtworkUri = Uri
+                            .parse("content://media/external/audio/albumart");
+                    Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, albumId);
+
+                    Songs songs = new Songs();
+                    songs.setTitle(cur.getString(titleColumn));
+                    songs.setArtist(cur.getString(artistColumn));
+                    songs.setAlbum(cur.getString(albumColumn));
+                    songs.setDuration(cur.getInt(durationColumn));
+                    songs.setPath(cur.getString(dataColumn));
+                    songs.setAlbumArtUri(albumArtUri);
+                    songsList.add(songs);
+                } while (cur.moveToNext());
+            }
+        }
+        return songsList;
+    }
+
 }

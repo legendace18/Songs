@@ -95,7 +95,6 @@ PlayListAdapter.TouchListener{
                 int id = menuItem.getItemId();
                 switch(id){
                     case R.id.action_open:
-
                         Intent intent = new Intent(getActivity(), PlayListActivity.class);
                         intent.putExtra("PLAYLIST_ID", playList.getId());
                         intent.putExtra("PLAYLIST_TITLE", playList.getTitle());

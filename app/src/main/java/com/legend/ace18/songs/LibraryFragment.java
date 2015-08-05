@@ -2,6 +2,7 @@ package com.legend.ace18.songs;
 
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -11,6 +12,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -39,6 +41,7 @@ public class LibraryFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View layout = inflater.inflate(R.layout.fragment_library, container, false);
+        setHasOptionsMenu(true);
         setToolbar(layout);
         setViewPager(layout);
         return layout;
@@ -81,6 +84,17 @@ public class LibraryFragment extends Fragment {
             throw new ClassCastException(activity.toString()
                     + " must implement DrawerToggleListener");
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if(id == R.id.action_search){
+            Intent intent = new Intent(getActivity(), SearchActivity.class);
+            intent.putExtra("CONTEXT", "LibraryFragment");
+            startActivity(intent);
+        }
+        return true;
     }
 
     public class MyFragmentPagerAdapter extends FragmentPagerAdapter implements ViewPager.OnPageChangeListener {

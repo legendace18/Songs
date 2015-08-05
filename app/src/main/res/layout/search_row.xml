@@ -21,4 +21,11 @@
         android:layout_gravity="center_vertical"
         android:text="Title"/>
 
+    <ImageButton
+        android:id="@+id/btn_overflow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_more_vert_black_24dp"
+        android:visibility="gone"/>
+
 </LinearLayout>

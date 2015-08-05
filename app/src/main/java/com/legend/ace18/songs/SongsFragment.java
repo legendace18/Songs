@@ -193,6 +193,7 @@ public class SongsFragment extends Fragment implements SwipeRefreshLayout.OnRefr
         switch (id) {
             case R.id.action_search:
                 Intent intent = new Intent(getActivity(), SearchActivity.class);
+                intent.putExtra("CONTEXT", "SongsFragment");
                 startActivity(intent);
                 return true;
         }

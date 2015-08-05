@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -37,7 +38,8 @@ import java.util.List;
 
 public class PlayListActivity extends AppCompatActivity implements MusicService.MusicServiceListener,
         SlidingUpPanelLayout.PanelSlideListener,
-        SeekBar.OnSeekBarChangeListener {
+        SeekBar.OnSeekBarChangeListener,
+        SongsAdapter.TouchListener {
 
     private int playListId;
     private String title;
@@ -61,6 +63,7 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
     private SongUtils utils;
     private Handler pHandler = new Handler();
     private List<Songs> songsList;
+    private SongsAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -270,7 +273,8 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
 
     private void getSongs(int playListId) {
         songsList = db.getPlayListSongs(playListId);
-        SongsAdapter adapter = new SongsAdapter(this, songsList);
+        adapter = new SongsAdapter(this, songsList);
+        adapter.setTouchListener(this);
         recyclerView.setAdapter(adapter);
     }
 
@@ -350,6 +354,9 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            return true;
+        } else if (id == android.R.id.home) {
+            onBackPressed();
             return true;
         }
 
@@ -433,4 +440,30 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
         }
     }
 
+    @Override
+    public void itemTouched(View v, final int position) {
+        final Songs songs = songsList.get(position);
+        PopupMenu popup = new PopupMenu(this, v);
+        popup.getMenuInflater().inflate(R.menu.playlist_songs_popup_menu, popup.getMenu());
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                int id = menuItem.getItemId();
+                switch (id) {
+                    case R.id.action_play:
+                        onSongClick(songsList, position);
+                        break;
+                    case R.id.action_remove:
+                        int count = db.removePlayListSong(playListId, songs.getSongs_id());
+                        if (count == 1) {
+                            songsList.remove(position);
+                            adapter.notifyItemRemoved(position);
+                        }
+                        break;
+                }
+                return true;
+            }
+        });
+        popup.show();
+    }
 }
