@@ -31,8 +31,8 @@ import android.widget.TextView;
 import com.legend.ace18.songs.adapters.PlayListAdapter;
 import com.legend.ace18.songs.model.PlayList;
 import com.legend.ace18.songs.model.Songs;
+import com.legend.ace18.songs.utils.Controllers;
 import com.legend.ace18.songs.utils.DatabaseHandler;
-import com.legend.ace18.songs.utils.MusicRetriever;
 import com.legend.ace18.songs.utils.MusicService;
 import com.legend.ace18.songs.utils.SongUtils;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
@@ -120,9 +120,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             btn_play.setImageResource(R.drawable.ic_pause_circle_fill_blue_48dp);
                             btn_play_short.setImageResource(R.drawable.ic_pause_black_48dp);
                         }
-                    } else {
-                        List<Songs> songsList = new MusicRetriever(MainActivity.this).prepare();
-                        onSongClick(0, songsList);
                     }
                 }
             }
@@ -142,9 +139,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             btn_play_short.setImageResource(R.drawable.ic_pause_black_48dp);
                             btn_play.setImageResource(R.drawable.ic_pause_circle_fill_blue_48dp);
                         }
-                    } else {
-                        List<Songs> songsList = new MusicRetriever(MainActivity.this).prepare();
-                        onSongClick(0, songsList);
                     }
                 }
             }
@@ -156,9 +150,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 if (musicBound) {
                     if (musicSrv.isMusicSet) {
                         musicSrv.playNext();
-                    } else {
-                        List<Songs> songsList = new MusicRetriever(MainActivity.this).prepare();
-                        onSongClick(0, songsList);
                     }
                 }
             }
@@ -170,9 +161,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 if (musicBound) {
                     if (musicSrv.isMusicSet) {
                         musicSrv.playPrev();
-                    } else {
-                        List<Songs> songsList = new MusicRetriever(MainActivity.this).prepare();
-                        onSongClick(0, songsList);
                     }
                 }
             }
@@ -250,8 +238,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             musicSrv.setMusicServiceListener(MainActivity.this);
             if (musicSrv.isMusicSet) {
                 setSongDetail(musicSrv.getSongDetails());
+                slidingLayout.setPanelState(PanelState.COLLAPSED);
                 updateProgressBar();
-                setControllers();
+                Controllers.setControllers(musicSrv, btn_play, btn_play_short, btn_shuffle, btn_repeat);
             }
             musicBound = true;
         }
@@ -281,6 +270,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         musicSrv.playSong(position);
         btn_play.setImageResource(R.drawable.ic_pause_circle_fill_blue_48dp);
         btn_play_short.setImageResource(R.drawable.ic_pause_black_48dp);
+        slidingLayout.setPanelState(PanelState.COLLAPSED);
         updateProgressBar();
     }
 
@@ -581,4 +571,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onSaveInstanceState(outState);
         fm.putFragment(outState, "MAINFRAGMENT", fm.findFragmentById(R.id.activity_container));
     }
+
 }

@@ -12,6 +12,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.legend.ace18.songs.MainActivity;
@@ -35,12 +37,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     public static Boolean isShuffle = false;
     public static int isRepeat = 0;
     public static Boolean isMusicSet = false;
+    private Boolean isPausedOnCall = false;
     private String title, artist;
     private int totalDuration;
 
     private MusicServiceListener musicServiceListener;
     private final IBinder musicBind = new MusicBinder();
     private NotificationManager mNotificationManager;
+    private TelephonyManager telephonyManager;
+    private PhoneStateListener phoneStateListener;
 
     @Override
     public void onCreate() {
@@ -66,6 +71,36 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+        phoneStateListener = new PhoneStateListener(){
+            @Override
+            public void onCallStateChanged(int state, String incomingNumber) {
+                super.onCallStateChanged(state, incomingNumber);
+                switch(state){
+                    case TelephonyManager.CALL_STATE_IDLE:
+                        if(player != null){
+                            if(isPausedOnCall){
+                                player.start();
+                                isPausedOnCall = false;
+                            }
+                        }
+                        break;
+                    case TelephonyManager.CALL_STATE_OFFHOOK:
+                        if(player != null && player.isPlaying()){
+                            player.pause();
+                            isPausedOnCall = true;
+                        }
+                        break;
+                    case TelephonyManager.CALL_STATE_RINGING:
+                        if(player != null && player.isPlaying()){
+                            player.pause();
+                            isPausedOnCall = true;
+                        }
+                        break;
+                }
+            }
+        };
+        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
         return START_STICKY;
     }
 
@@ -210,4 +245,5 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         void onPlayMusic(Songs songs);
         void onStopMusic();
     }
+
 }

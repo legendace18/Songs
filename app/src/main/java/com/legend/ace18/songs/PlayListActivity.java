@@ -13,22 +13,26 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.legend.ace18.songs.adapters.SongsAdapter;
 import com.legend.ace18.songs.model.Songs;
+import com.legend.ace18.songs.utils.Controllers;
 import com.legend.ace18.songs.utils.DatabaseHandler;
 import com.legend.ace18.songs.utils.MusicRetriever;
 import com.legend.ace18.songs.utils.MusicService;
 import com.legend.ace18.songs.utils.SongUtils;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState;
 import com.squareup.picasso.Picasso;
 
 import org.w3c.dom.Text;
@@ -59,6 +63,7 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
     private ImageView playerImage, songImage;
     private SlidingUpPanelLayout slidingLayout;
     private SeekBar songProgressbar;
+    private RelativeLayout player_layout;
 
     private SongUtils utils;
     private Handler pHandler = new Handler();
@@ -133,9 +138,6 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
                             btn_play_short.setImageResource(R.drawable.ic_pause_black_48dp);
                             btn_play.setImageResource(R.drawable.ic_pause_circle_fill_blue_48dp);
                         }
-                    } else {
-                        List<Songs> songsList = new MusicRetriever(PlayListActivity.this).prepare();
-                        onSongClick(songsList, 0);
                     }
                 }
             }
@@ -147,9 +149,6 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
                 if (musicBound) {
                     if (musicSrv.isMusicSet) {
                         musicSrv.playNext();
-                    } else {
-                        List<Songs> songsList = new MusicRetriever(PlayListActivity.this).prepare();
-                        onSongClick(songsList, 0);
                     }
                 }
             }
@@ -161,9 +160,6 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
                 if (musicBound) {
                     if (musicSrv.isMusicSet) {
                         musicSrv.playPrev();
-                    } else {
-                        List<Songs> songsList = new MusicRetriever(PlayListActivity.this).prepare();
-                        onSongClick(songsList, 0);
                     }
                 }
             }
@@ -220,7 +216,9 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
             if (musicSrv.isMusicSet) {
                 setSongDetail(musicSrv.getSongDetails());
                 updateProgressBar();
-                setControllers();
+                Controllers.setControllers(musicSrv, btn_play, btn_play_short, btn_shuffle, btn_repeat);
+            }else{
+                player_layout.setVisibility(View.GONE);
             }
             musicBound = true;
         }
@@ -235,7 +233,9 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
     public void onStart() {
         super.onStart();
         // Start and Bind service to activity
+
         if (serviceIntent == null) {
+            Log.d("legend.ace18", "ololo");
             serviceIntent = new Intent(this, MusicService.class);
             startService(serviceIntent);
             bindService(serviceIntent, musicConnection, Context.BIND_AUTO_CREATE);
@@ -252,6 +252,7 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
     }
 
     private void initViews() {
+        player_layout = (RelativeLayout) findViewById(R.id.player);
         tv_title = (TextView) findViewById(R.id.tv_title);
         tv_artist = (TextView) findViewById(R.id.tv_artist);
         tv_currentTime = (TextView) findViewById(R.id.tv_currentTime);
@@ -283,6 +284,7 @@ public class PlayListActivity extends AppCompatActivity implements MusicService.
         musicSrv.playSong(position);
         btn_play.setImageResource(R.drawable.ic_pause_circle_fill_blue_48dp);
         btn_play_short.setImageResource(R.drawable.ic_pause_black_48dp);
+        slidingLayout.setPanelState(PanelState.COLLAPSED);
         updateProgressBar();
     }
 

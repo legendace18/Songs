@@ -1,5 +1,6 @@
 package com.legend.ace18.songs;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -7,6 +8,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.widget.NestedScrollView;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,7 +23,7 @@ import com.legend.ace18.songs.utils.SongUtils;
 import java.io.IOException;
 
 
-public class SongsDetailActivity extends NavigationDrawerActivity implements MediaPlayer.OnCompletionListener
+public class SongsDetailActivity extends AppCompatActivity implements MediaPlayer.OnCompletionListener
         , SeekBar.OnSeekBarChangeListener {
 
     private Toolbar toolbar;

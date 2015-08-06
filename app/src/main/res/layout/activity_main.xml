@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     tools:context="com.legend.ace18.songs.NavigationDrawerActivity">
 
-    <com.sothree.slidinguppanel.SlidingUpPanelLayout
-        xmlns:sothree="http://schemas.android.com/apk/res-auto"
+    <com.sothree.slidinguppanel.SlidingUpPanelLayout xmlns:sothree="http://schemas.android.com/apk/res-auto"
         android:id="@+id/sliding_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -24,7 +23,8 @@
 
         <include
             android:id="@+id/player"
-            layout="@layout/player" />
+            layout="@layout/player"
+            android:visibility="gone"/>
     </com.sothree.slidinguppanel.SlidingUpPanelLayout>
 
     <android.support.design.widget.NavigationView
